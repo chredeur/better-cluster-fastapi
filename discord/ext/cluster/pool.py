@@ -3,7 +3,6 @@ from __future__ import annotations  # type: ignore
 import time
 import asyncio
 import logging
-import json
 
 from types import TracebackType
 from typing import Any, Dict, Optional, Type
