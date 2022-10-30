@@ -27,39 +27,19 @@ py -m pip install -U better-cluster
 > ### Development version
 #### For Linux
 ```shell
-python3 -m pip install -U git+https://github.com/MiroslavRosenov/better-cluster
+python3 -m pip install -U git+https://github.com/chredeur0/better-cluster-fastapi
 ```
 #### For Windows
 ```shell
-py -m pip install -U git+https://github.com/MiroslavRosenov/better-cluster
+py -m pip install -U git+https://github.com/chredeur0/better-cluster-fastapi
 ```
 
 
 # Support
 
-You can join the support server [here](https://discord.gg/Rpg7zjFYsh)
+You can join the support server [here](https://discord.gg/Q8EHcWkmZU)
 
 # Examples
-
-## Example of a cluster
-```python
-import asyncio
-import logging
-from discord.utils import _ColourFormatter
-from discord.ext.cluster import Cluster
-
-def setup_logging():
-    logger = logging.getLogger()
-    handler = logging.StreamHandler()
-    handler.setFormatter(_ColourFormatter())
-    logger.setLevel(logging.INFO)
-    logger.addHandler(handler)
-
-if __name__ == "__main__":
-    setup_logging()
-    cluster = Cluster()
-    asyncio.run(cluster.start())
-```
 
 ## Example of a shard
 ```python
