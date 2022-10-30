@@ -11,7 +11,7 @@ from fastapi import FastAPI, WebSocket, WebSocketDisconnect
 
 app = FastAPI()
 
-secret_key = "GT+@}mqU39^L58]r3rVB5p!c"
+secret_key = "my_secret_key"
 
 
 class ShardsManager:
