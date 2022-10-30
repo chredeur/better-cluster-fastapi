@@ -52,7 +52,7 @@ class Shard:
         "secret_key", 
         "logger", 
         "websocket", 
-        "task"
+        "task",
     )
 
     endpoints: Dict[int, Dict[str, Tuple[Union[int, str], RouteFunc]]] = {}
@@ -122,26 +122,58 @@ class Shard:
         
         if not response.get("code"):
             response["code"] = 200
-        
-        async with connect(
-            self.base_url + "/return_response",
-            extra_headers={
-                "Secret-Key": str(self.secret_key),
-                "UUID": request["uuid"]
-            }
-        ) as ws:
-            await ws.send(json.dumps(response, separators=(", ", ": ")))
-            self.logger.debug(f"Sending response: {response!r}")
+
+        response_finaly = {'endpoint_choosen': "return_response", "uuid": request.get("uuid"), 'response': response}
+
+        await self.websocket.send(json.dumps(response_finaly, separators=(", ", ": ")))
+        self.logger.debug(f"Sending response: {response!r}")
 
     async def wait_for_requests(self) -> None:
         while True:
             try:
                 raw = await self.websocket.recv()
             except ConnectionClosed:
+                self.websocket = None
+                asyncio.create_task(self.reconnect())
                 break
             else:
                 data: Dict = json.loads(raw)
                 asyncio.create_task(self.handle_request(data))
+
+    async def reconnect(self) -> None:
+        while True:
+            if self.connected:
+                break
+            try:
+                self.websocket = await connect(
+                    self.base_url,
+                    extra_headers={
+                        "Secret-Key": str(self.secret_key),
+                        "Shard-ID": self.shard_id,
+                    }
+                )
+            except (ConnectionRefusedError, InvalidHandshake):
+                self.websocket = None
+                self.logger.critical("Failed to connect to the cluster!")
+            else:
+                await self.websocket.send(
+                    json.dumps({
+                        "endpoint_choosen": "initialize_shard",
+                        "response": {
+                            "endpoints": [],
+                            "client_id": self.bot.user.id
+                        }
+                    })
+                )
+                message: Dict[str, Any] = json.loads(await self.websocket.recv())
+                if message["code"] == 200:
+                    self.task = asyncio.Task(self.wait_for_requests())
+                    self.logger.info("Successfully connected to the cluster!")
+                    if self.bot.is_ready():
+                        self.bot.dispatch("shard_ready")
+                    else:
+                        asyncio.create_task(self.wait_bot_is_ready())
+            await asyncio.sleep(2)
 
     async def connect(self) -> None:
         """|coro|
@@ -151,7 +183,7 @@ class Shard:
         """
         try:
             self.websocket = await connect(
-                self.base_url + "/initialize_shard", 
+                self.base_url,
                 extra_headers={
                     "Secret-Key": str(self.secret_key),
                     "Shard-ID": self.shard_id,
@@ -167,8 +199,11 @@ class Shard:
                 self.endpoints[self.bot.user.id][f"{x[0]}"] = (self.shard_id, x[1])
             await self.websocket.send(
                 json.dumps({
-                    "endpoints": [x[0] for x in self.endpoints[self.bot.user.id].items()],
-                    "client_id": self.bot.user.id
+                    "endpoint_choosen": "initialize_shard",
+                    "response": {
+                        "endpoints": [x[0] for x in self.endpoints[self.bot.user.id].items()],
+                        "client_id": self.bot.user.id
+                    }
                 })
             )
             message: Dict[str, Any] = json.loads(await self.websocket.recv())
@@ -189,14 +224,6 @@ class Shard:
         """
 
         if self.websocket:
-            async with connect(
-                self.base_url + "/disconnect_shard",
-                extra_headers={
-                    "Secret-Key": str(self.secret_key).encode("UTF-8"),
-                    "Shard-ID": self.shard_id
-                }
-            ):
-                pass
             await self.websocket.close()
         else:
             raise NotConnected
