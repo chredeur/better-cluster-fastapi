@@ -17,23 +17,12 @@
 > ### Stable version
 #### For Linux
 ```shell
-python3 -m pip install -U better-cluster
-```
-#### For Windows
-```shell
-py -m pip install -U better-cluster
-```
-
-> ### Development version
-#### For Linux
-```shell
 python3 -m pip install -U git+https://github.com/chredeur0/better-cluster-fastapi
 ```
 #### For Windows
 ```shell
 py -m pip install -U git+https://github.com/chredeur0/better-cluster-fastapi
 ```
-
 
 # Support
 
