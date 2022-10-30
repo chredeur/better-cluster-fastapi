@@ -15,13 +15,13 @@ with open('discord/ext/cluster/__init__.py', 'rb') as f:
     version = str(ast.literal_eval(_version_re.search(f.read().decode('UTF-8')).group(1)))
 
 setuptools.setup(
-    name="better-cluster",
+    name="better-cluster-fastapi",
     version=version,
     description="A high-performance inter-process communication library designed to handle communication between multiple shards",
     long_description=long_description,
-    author="DaPandaOfficial",
-    author_email="miroslav.rosenov39@gmail.com",
-    url="https://github.com/MiroslavRosenov/better-cluster",
+    author="DaPandaOfficial and chredeur",
+    author_email="flazebot@gmail.com",
+    url="https://github.com/chredeur0/better-cluster-fastapi",
     packages=[
         "discord.ext.cluster"
     ],
@@ -44,8 +44,9 @@ setuptools.setup(
     ],
     license="MIT License",
     keywords=[
+        "better-cluster-fastapi",
         "better-cluster",
-        "better-ipc",
+        "fastapi",
         "cluster", 
         "python", 
         "discord.py"
@@ -54,7 +55,7 @@ setuptools.setup(
     install_requires=requirements,
     python_requires=">=3.8.0",
     project_urls={
-        "Source": "https://github.com/MiroslavRosenov/better-cluster",
-        "Issue Tracker": "https://github.com/MiroslavRosenov/better-cluster/issues",
+        "Source": "https://github.com/chredeur0/better-cluster-fastapi",
+        "Issue Tracker": "https://github.com/chredeur0/better-cluster-fastapi/issues",
     },
 )
