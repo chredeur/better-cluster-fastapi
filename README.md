@@ -1,4 +1,4 @@
-# Better Cluster for Flaze
+# Better Cluster Fastapi
 
 
 <a href="https://pypi.org/project/better-cluster/" target="_blank"><img src="https://img.shields.io/pypi/v/better-cluster"></a>
