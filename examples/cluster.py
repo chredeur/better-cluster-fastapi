@@ -1,23 +1,17 @@
 from __future__ import annotations
-from typing import List
 
-import asyncio
-import contextlib
-import logging
 import json
 import uvicorn
 import os
 
-from uuid import UUID, uuid4
+from uuid import uuid4
 from typing import Callable, List, Dict, Any, Optional, Tuple, Union
 
 from fastapi import FastAPI, WebSocket, WebSocketDisconnect
-from websockets.server import WebSocketServerProtocol
-from websockets.exceptions import ConnectionClosed, ConnectionClosedError
 
 app = FastAPI()
 
-secret_key = "my_secret_key"
+secret_key = "GT+@}mqU39^L58]r3rVB5p!c"
 
 
 class ShardsManager:
