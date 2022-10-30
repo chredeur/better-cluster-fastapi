@@ -3,6 +3,7 @@ from __future__ import annotations  # type: ignore
 import time
 import asyncio
 import logging
+import json
 
 from types import TracebackType
 from typing import Any, Dict, Optional, Type
@@ -40,9 +41,10 @@ class Session:
         self.session = session
         try:
             self.ws = await self.session.ws_connect(
-                self.url + "/create_request",
+                self.url,
                 autoclose=False,
                 headers={
+                    "Endpoints": "create_request",
                     "Secret-Key": str(self.secret_key),
                     "Shard-ID": self.shard_id,
                 }
@@ -52,7 +54,7 @@ class Session:
             raise NotConnected("WebSocket connection failed, the server is unreachable.")
 
         if await self.is_alive():
-            self.logger.debug(f"Client connected to {self.url + '/create_request'!r}")
+            self.logger.debug(f"Client connected to {self.url!r}")
         else:
             await self.session.close()
             raise NotConnected("WebSocket connection failed, the server is unreachable.")
@@ -94,8 +96,11 @@ class Session:
         self.logger.debug(f"Sending request to {endpoint!r} with %r", kwargs)
 
         payload = {
-            "endpoint": endpoint,
-            "kwargs": {**kwargs}
+            "endpoint_choosen": "create_request",
+            "response": {
+                "endpoint": endpoint,
+                "kwargs": {**kwargs}
+            }
         }
 
         try:
