@@ -3,6 +3,7 @@ from __future__ import annotations  # type: ignore
 import time
 import asyncio
 import logging
+import json
 
 from types import TracebackType
 from typing import Any, Dict, Optional, Type
@@ -43,7 +44,7 @@ class Session:
                 self.url + "/create_request",
                 autoclose=False,
                 headers={
-                    "Secret-Key": self.secret_key,
+                    "Secret-Key": str(self.secret_key),
                     "Shard-ID": self.shard_id,
                 }
             )
@@ -95,7 +96,7 @@ class Session:
 
         payload = {
             "endpoint": endpoint,
-            "data": kwargs
+            "kwargs": {**kwargs}
         }
 
         try:
