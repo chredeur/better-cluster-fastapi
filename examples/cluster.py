@@ -17,7 +17,7 @@ from websockets.exceptions import ConnectionClosed, ConnectionClosedError
 
 app = FastAPI()
 
-secret_key = "my_screts"
+secret_key = "%%E!dsA)_&nE3c)+h["
 
 
 class ShardsManager:
