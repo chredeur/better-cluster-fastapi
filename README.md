@@ -5,7 +5,7 @@
 <img src="https://img.shields.io/pypi/pyversions/better-cluster">
 <img src="https://img.shields.io/github/last-commit/MiroslavRosenov/better-cluster">
 <img src="https://img.shields.io/github/license/MiroslavRosenov/better-cluster">
-<a href="https://discord.gg/Rpg7zjFYsh" target="_blank"><img src="https://img.shields.io/discord/875005644594372638?label=discord"></a>
+<a href="https://discord.gg/Q8EHcWkmZU" target="_blank"><img src="https://img.shields.io/discord/875005644594372638?label=discord"></a>
 
 ## A high-performance inter-process communication library designed to handle communication between multiple shards
 
