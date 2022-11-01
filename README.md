@@ -1,14 +1,14 @@
 # Better Cluster Fastapi
 
 
-<img src="https://img.shields.io/pypi/pyversions/better-cluster">
-<img src="https://img.shields.io/github/last-commit/MiroslavRosenov/better-cluster">
-<img src="https://img.shields.io/github/license/MiroslavRosenov/better-cluster">
+<a><img src="https://img.shields.io/pypi/pyversions/better-cluster">
+<img src="https://img.shields.io/github/last-commit/chredeur0/better-cluster-fastapi">
+<img src="https://img.shields.io/github/license/chredeur0/better-cluster-fastapi">
 <a href="https://discord.gg/Q8EHcWkmZU" target="_blank"><img src="https://img.shields.io/discord/1004840384091922473?label=discord"></a>
 
 ## A high-performance inter-process communication library designed to handle communication between multiple shards
 
-<img src="https://raw.githubusercontent.com/MiroslavRosenov/better-cluster/main/images/banner.png">
+<img src="https://raw.githubusercontent.com/chredeur0/better-cluster-fastapi/main/images/banner.png">
 
 #### This library is made to handle multiple discord clients. If you want something simpler or have only one client, check out [better-ipc](https://github.com/MiroslavRosenov/better-ipc)
 
