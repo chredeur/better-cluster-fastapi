@@ -1,4 +1,4 @@
 aiohttp==3.8.1
 discord.py>=2.0
 fastapi
-websockets==10.3
+websockets
