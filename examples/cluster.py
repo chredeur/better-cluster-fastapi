@@ -114,4 +114,4 @@ async def websocket_request_manager(websocket: WebSocket):
 
 
 if __name__ == "__main__":
-    uvicorn.run(f"{__name__}:app", host="0.0.0.0", port=9999, reload=True, workers=3)
+    uvicorn.run(f"{__name__}:app", host="0.0.0.0", port=9999, reload=True, workers=9)
