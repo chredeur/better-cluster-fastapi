@@ -51,13 +51,13 @@ class Session:
             )
         except (ClientConnectionError, ClientConnectorError):
             await self.session.close()
-            raise NotConnected("WebSocket connection failed, the server is unreachable.")
+            return self.logger.error("WebSocket connection failed, the server is unreachable.")
 
         if await self.is_alive():
             self.logger.debug(f"Client connected to {self.url!r}")
         else:
             await self.session.close()
-            raise NotConnected("WebSocket connection failed, the server is unreachable.")
+            return self.logger.error("WebSocket connection failed, the server is unreachable.")
     
     async def __retry__(self, endpoint, **kwargs) -> WSCloseCode:
         payload = {
