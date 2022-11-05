@@ -11,7 +11,6 @@ from discord.ext.cluster.objects import ClientPayload
 from websockets.server import WebSocketServerProtocol
 from websockets.exceptions import InvalidHandshake, ConnectionClosed
 from typing import TYPE_CHECKING, Any, Tuple, Optional, Callable, TypeVar, Dict, Union, Type, List
-from aiohttp import WSCloseCode, WSMsgType
 
 if TYPE_CHECKING:
     from typing_extensions import ParamSpec, TypeAlias
