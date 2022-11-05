@@ -22,7 +22,6 @@ class ShardsManager:
 
     async def initialize_shard(self, websocket: WebSocket, data):
         id = websocket.headers["Shard-ID"]
-        print(self.shards)
         if self.shards.get(id):
             await websocket.send_text(json.dumps({"message": f"Shard with ID {id!r} already exists!", "code": 500}, separators=(", ", ": ")))
             await websocket.close()
@@ -46,7 +45,6 @@ class ShardsManager:
 
     async def disconnect(self, websocket: WebSocket):
         id = websocket.headers["Shard-ID"]
-        print('disconnect')
         if (shard := self.shards.get(id)):
             if websocket == shard[0]:
                 del self.shards[id]
@@ -108,9 +106,7 @@ async def websocket_request_manager(websocket: WebSocket):
                     if result != 200:
                         break
                 else:
-                    result = await shards_manager.initialize_shard(websocket=websocket, data=data)
-                    if result != 200:
-                        break
+                    await shards_manager.return_response(websocket=websocket, data=data)
             elif "Endpoints" in websocket.headers and websocket.headers["Endpoints"] == "create_request":
                 if "connection_test" in data:
                     await websocket.send_text(json.dumps({"message": "Successful connection", "code": 200}, separators=(", ", ": ")))
