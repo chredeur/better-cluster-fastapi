@@ -3,6 +3,7 @@ from __future__ import annotations
 import json
 import uvicorn
 import os
+import traceback
 
 from uuid import uuid4
 from typing import Callable, List, Dict, Any, Optional, Tuple, Union
@@ -21,9 +22,11 @@ class ShardsManager:
 
     async def initialize_shard(self, websocket: WebSocket, data):
         id = websocket.headers["Shard-ID"]
+        print(self.shards)
         if self.shards.get(id):
             await websocket.send_text(json.dumps({"message": f"Shard with ID {id!r} already exists!", "code": 500}, separators=(", ", ": ")))
-            return await websocket.close()
+            await websocket.close()
+            return 500
         else:
             if not os.path.isdir("db"):
                 os.mkdir(f'db')
@@ -38,12 +41,15 @@ class ShardsManager:
                     json.dump(dict_finaly, e, sort_keys=True, indent=4)
                     e.close()
                 self.shards[id] = websocket, data.get("response")['endpoints'], data.get("response")["client_id"]
-            return await websocket.send_text(json.dumps({"message": "Successfuly connected to the cluster!", "code": 200}, separators=(", ", ": ")))
+            await websocket.send_text(json.dumps({"message": "Successfuly connected to the cluster!", "code": 200}, separators=(", ", ": ")))
+            return 200
 
-    def disconnect(self, websocket: WebSocket):
+    async def disconnect(self, websocket: WebSocket):
         id = websocket.headers["Shard-ID"]
-        if self.shards.get(id):
-            del self.shards[id]
+        print('disconnect')
+        if (shard := self.shards.get(id)):
+            if websocket == shard[0]:
+                del self.shards[id]
 
     async def return_response(self, websocket: WebSocket, data: Dict):
         await self.waiters[data.get("uuid")].send_text(json.dumps(data.get("response"), separators=(", ", ": ")))
@@ -53,18 +59,21 @@ class ShardsManager:
     async def create_request(self, websocket: WebSocket, data: Dict):
         if not (id := websocket.headers["Shard-ID"]):
             await websocket.send_text(json.dumps({"message": "Missing shard ID!", "code": 500}, separators=(", ", ": ")))
-            return await websocket.close()
+            await websocket.close()
+            return 500
 
         if not (shard := self.shards.get(id)):
             await websocket.send_text(json.dumps({"message": f"Shard with ID {id!r} doesn't exists!", "code": 404}, separators=(", ", ": ")))
-            return await websocket.close()
+            await websocket.close()
+            return 404
 
         endpoint: Optional[str] = data["endpoint"]
         kwargs: Dict[str, Any] = data["kwargs"]
 
         if not endpoint in shard[1]:
             await websocket.send_text(json.dumps({"message": f"Unknown endpoint!", "404": 404}, separators=(", ", ": ")))
-            return await websocket.close()
+            await websocket.close()
+            return 404
         else:
             ID = str(uuid4())
             await shard[0].send_text(json.dumps({"endpoint": endpoint, "data": kwargs, "uuid": ID}, separators=(", ", ": ")))
@@ -92,15 +101,16 @@ async def websocket_request_manager(websocket: WebSocket):
 
     try:
         while True:
-            try:
-                data = await websocket.receive_json()
-            except:
-                break
+            data = await websocket.receive_json()
             if "Endpoints" not in websocket.headers and data.get("endpoint_choosen") in ["initialize_shard", "return_response"]:
                 if data.get("endpoint_choosen") == "initialize_shard":
-                    await shards_manager.initialize_shard(websocket=websocket, data=data)
+                    result = await shards_manager.initialize_shard(websocket=websocket, data=data)
+                    if result != 200:
+                        break
                 else:
-                    await shards_manager.return_response(websocket=websocket, data=data)
+                    result = await shards_manager.initialize_shard(websocket=websocket, data=data)
+                    if result != 200:
+                        break
             elif "Endpoints" in websocket.headers and websocket.headers["Endpoints"] == "create_request":
                 if "connection_test" in data:
                     await websocket.send_text(json.dumps({"message": "Successful connection", "code": 200}, separators=(", ", ": ")))
@@ -110,7 +120,7 @@ async def websocket_request_manager(websocket: WebSocket):
                 await websocket.send_text(json.dumps({"message": "Endpoint unknown", "code": 500}, separators=(", ", ": ")))
                 return await websocket.close()
     except WebSocketDisconnect:
-        shards_manager.disconnect(websocket=websocket)
+        await shards_manager.disconnect(websocket=websocket)
 
 
 if __name__ == "__main__":
