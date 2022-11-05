@@ -11,6 +11,7 @@ from discord.ext.cluster.objects import ClientPayload
 from websockets.server import WebSocketServerProtocol
 from websockets.exceptions import InvalidHandshake, ConnectionClosed
 from typing import TYPE_CHECKING, Any, Tuple, Optional, Callable, TypeVar, Dict, Union, Type, List
+from aiohttp import WSCloseCode, WSMsgType
 
 if TYPE_CHECKING:
     from typing_extensions import ParamSpec, TypeAlias
@@ -173,7 +174,7 @@ class Shard:
                         self.bot.dispatch("shard_ready")
                     else:
                         asyncio.create_task(self.wait_bot_is_ready())
-            await asyncio.sleep(2)
+            await asyncio.sleep(3)
 
     async def connect(self) -> None:
         """|coro|
