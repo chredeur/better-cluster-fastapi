@@ -214,6 +214,8 @@ class Shard:
                     self.bot.dispatch("shard_ready")
                 else:
                     asyncio.create_task(self.wait_bot_is_ready())
+            else:
+                return self.logger.critical(message['message'])
             del self.endpoints_list
 
     async def disconnect(self) -> None:
