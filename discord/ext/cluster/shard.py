@@ -159,6 +159,7 @@ class Shard:
                 self.websocket = None
                 self.logger.critical("Failed to connect to the cluster!")
             else:
+                self.pending_closing = False
                 await self.websocket.send(
                     json.dumps({
                         "endpoint_choosen": "initialize_shard",
