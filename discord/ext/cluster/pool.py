@@ -128,7 +128,6 @@ class Session:
             self.logger.error("Received WSMsgType of ERROR, instead of TEXT/BYTES!")
 
         else:
-            await self.close()
             data = recv.json()
             if int(data["code"]) != 200:
                 self.logger.warning(f"Received code {data['code']!r} insted of usual 200")
