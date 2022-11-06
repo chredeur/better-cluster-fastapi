@@ -152,7 +152,7 @@ class Shard:
                     self.base_url,
                     extra_headers={
                         "Secret-Key": str(self.secret_key),
-                        "Shard-ID": self.shard_id,
+                        "Shard-ID": str(self.shard_id),
                     }
                 )
             except (ConnectionRefusedError, InvalidHandshake):
@@ -190,7 +190,7 @@ class Shard:
                 self.base_url,
                 extra_headers={
                     "Secret-Key": str(self.secret_key),
-                    "Shard-ID": self.shard_id,
+                    "Shard-ID": str(self.shard_id),
                 }
             )
         except (ConnectionRefusedError, InvalidHandshake):
