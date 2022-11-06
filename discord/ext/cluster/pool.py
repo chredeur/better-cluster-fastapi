@@ -46,7 +46,7 @@ class Session:
                 headers={
                     "Endpoints": "create_request",
                     "Secret-Key": str(self.secret_key),
-                    "Shard-ID": self.shard_id,
+                    "Shard-ID": str(self.shard_id),
                 }
             )
         except (ClientConnectionError, ClientConnectorError):
