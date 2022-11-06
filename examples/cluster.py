@@ -69,7 +69,6 @@ class ShardsManager:
 
     async def return_response(self, websocket: WebSocket, data: Dict):
         await self.waiters[data.get("uuid")].send_text(json.dumps(data.get("response"), separators=(", ", ": ")))
-        await self.waiters[data.get("uuid")].close()
         del self.waiters[data.get("uuid")]
 
     async def create_request(self, websocket: WebSocket, data: Dict):
@@ -94,6 +93,7 @@ class ShardsManager:
             ID = str(uuid4())
             await shard[0].send_text(json.dumps({"endpoint": endpoint, "data": kwargs, "uuid": ID}, separators=(", ", ": ")))
             self.waiters[ID] = websocket
+            return 200
 
 
 shards_manager = ShardsManager()
@@ -133,7 +133,11 @@ async def websocket_request_manager(websocket: WebSocket):
                 if "connection_test" in data:
                     await websocket.send_text(json.dumps({"message": "Successful connection", "code": 200}, separators=(", ", ": ")))
                 else:
-                    await shards_manager.create_request(websocket=websocket, data=data.get("response"))
+                    result = await shards_manager.create_request(websocket=websocket, data=data.get("response"))
+                    if result == 200:
+                        pass
+                    else:
+                        break
             else:
                 await websocket.send_text(json.dumps({"message": "Endpoint unknown", "code": 500}, separators=(", ", ": ")))
                 return await websocket.close()
