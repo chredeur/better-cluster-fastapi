@@ -53,6 +53,7 @@ class Shard:
         "logger", 
         "websocket", 
         "task",
+        "pending_closing",
     )
 
     endpoints: Dict[int, Dict[str, Tuple[Union[int, str], RouteFunc]]] = {}
@@ -75,6 +76,7 @@ class Shard:
         self.logger = logging.getLogger("discord.ext.cluster")
         self.websocket: WebSocketServerProtocol = None
         self.task: asyncio.Task = None
+        self.pending_closing: bool = False
 
     def __repr__(self) -> str:
         return f"<{self.__class__.__name__} connected={self.connected}>"
@@ -133,8 +135,9 @@ class Shard:
             try:
                 raw = await self.websocket.recv()
             except ConnectionClosed:
-                self.websocket = None
-                asyncio.create_task(self.reconnect())
+                if self.pending_closing is False:
+                    self.websocket = None
+                    asyncio.create_task(self.reconnect())
                 break
             else:
                 data: Dict = json.loads(raw)
@@ -192,6 +195,7 @@ class Shard:
         except (ConnectionRefusedError, InvalidHandshake):
             return self.logger.critical("Failed to connect to the cluster!")
         else:
+            self.pending_closing = False
             if self.bot.user.id in self.endpoints:
                 del self.endpoints[self.bot.user.id]
             self.endpoints[self.bot.user.id] = {}
@@ -226,6 +230,13 @@ class Shard:
         """
 
         if self.websocket:
+            self.pending_closing = True
+            await self.websocket.send(
+                json.dumps({
+                    "endpoint_choosen": "disconnect_shard"
+                })
+            )
+            self.logger.info("Successfully disconnected to the cluster!")
             await self.websocket.close()
         else:
             raise NotConnected
