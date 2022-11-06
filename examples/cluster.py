@@ -43,6 +43,24 @@ class ShardsManager:
             await websocket.send_text(json.dumps({"message": "Successfuly connected to the cluster!", "code": 200}, separators=(", ", ": ")))
             return 200
 
+    async def disconnect_shard(self, websocket: WebSocket):
+        id = websocket.headers["Shard-ID"]
+        if (shard := self.shards.get(id)):
+            if websocket == shard[0]:
+                try:
+                    os.remove(f"db/{id}.json")
+                except:
+                    pass
+                await shard[0].close()
+                del self.shards[id]
+                return 200
+            else:
+                await websocket.close()
+                return 500
+        else:
+            await websocket.close()
+            return 500
+
     async def disconnect(self, websocket: WebSocket):
         id = websocket.headers["Shard-ID"]
         if (shard := self.shards.get(id)):
@@ -100,13 +118,17 @@ async def websocket_request_manager(websocket: WebSocket):
     try:
         while True:
             data = await websocket.receive_json()
-            if "Endpoints" not in websocket.headers and data.get("endpoint_choosen") in ["initialize_shard", "return_response"]:
+            if "Endpoints" not in websocket.headers and data.get("endpoint_choosen") in ["initialize_shard", "return_response", "disconnect_shard"]:
                 if data.get("endpoint_choosen") == "initialize_shard":
                     result = await shards_manager.initialize_shard(websocket=websocket, data=data)
                     if result != 200:
                         break
                 else:
-                    await shards_manager.return_response(websocket=websocket, data=data)
+                    if data.get("endpoint_choosen") == "disconnect_shard":
+                        await shards_manager.disconnect_shard(websocket=websocket)
+                        break
+                    else:
+                        await shards_manager.return_response(websocket=websocket, data=data)
             elif "Endpoints" in websocket.headers and websocket.headers["Endpoints"] == "create_request":
                 if "connection_test" in data:
                     await websocket.send_text(json.dumps({"message": "Successful connection", "code": 200}, separators=(", ", ": ")))
