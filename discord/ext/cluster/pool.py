@@ -83,7 +83,7 @@ class Session:
             return False
         return True
 
-    async def request(self, endpoint: str, **kwargs) -> Optional[Dict[str, Any]]:
+    async def request(self, endpoint: str, wait_response: Optional[bool] = True, **kwargs) -> Optional[Dict[str, Any]]:
         """|coro|
         Make a request to the IPC server process.
         Parameters
@@ -99,6 +99,7 @@ class Session:
             "endpoint_choosen": "create_request",
             "response": {
                 "endpoint": endpoint,
+                "wait_finish": wait_response,
                 "kwargs": {**kwargs}
             }
         }

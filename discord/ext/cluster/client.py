@@ -65,3 +65,17 @@ class Client:
         """
         async with Session(self.url, bot_id, identifier, self.secret_key) as session:
             return await session.request(endpoint, **kwargs)
+
+    async def request_all(self, bot_id: Union[str, int], endpoint: str, wait_response: Optional[bool]=True, **kwargs: Any) -> Optional[Dict]:
+        """|coro|
+
+        Make a request to the server process.
+
+        ----------
+        endpoint: `str`
+            The endpoint to request on the server
+        **kwargs: `Any`
+            The data for the endpoint
+        """
+        async with Session(self.url, bot_id, 'all', self.secret_key) as session:
+            return await session.request(endpoint, **kwargs)
