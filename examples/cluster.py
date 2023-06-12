@@ -33,13 +33,19 @@ class ShardsManager:
             with open(f"db/{bot_id}/{identifier}.json", 'r') as f:
                 js = json.load(f)
                 f.close()
-            self.shards[bot_id] = {identifier: (websocket, js['endpoints'])}
+            if bot_id not in self.shards:
+                self.shards[bot_id] = {identifier: (websocket, js['endpoints'])}
+            else:
+                self.shards[bot_id][identifier] = (websocket, js['endpoints'])
         else:
             with open(f"db/{bot_id}/{identifier}.json", "w+") as e:
                 dict_finaly = {"endpoints": data_response.get('endpoints')}
                 json.dump(dict_finaly, e, sort_keys=True, indent=4)
                 e.close()
-            self.shards[bot_id] = {identifier: (websocket, data_response['endpoints'])}
+            if bot_id not in self.shards:
+                self.shards[bot_id] = {identifier: (websocket, data_response['endpoints'])}
+            else:
+                self.shards[bot_id][identifier] = (websocket, data_response['endpoints'])
         await websocket.send_text(json.dumps({"message": "Successfuly connected to the cluster!", "code": 200}, separators=(", ", ": ")))
         return 200
 
