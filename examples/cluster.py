@@ -39,7 +39,7 @@ class ShardsManager:
                 dict_finaly = {"endpoints": data_response.get('endpoints')}
                 json.dump(dict_finaly, e, sort_keys=True, indent=4)
                 e.close()
-            self.shards[bot_id] = self.shards[bot_id] = {identifier: (websocket, data_response['endpoints'])}
+            self.shards[bot_id] = {identifier: (websocket, data_response['endpoints'])}
         await websocket.send_text(json.dumps({"message": "Successfuly connected to the cluster!", "code": 200}, separators=(", ", ": ")))
         return 200
 
