@@ -46,6 +46,7 @@ class Session:
                     "Endpoints": "create_request",
                     "Secret-Key": str(self.secret_key),
                     "Bot-ID": str(self.bot_id),
+                    "Identifier": str(self.identifier)
                 }
             )
         except (ClientConnectionError, ClientConnectorError):
@@ -97,7 +98,6 @@ class Session:
         payload = {
             "endpoint_choosen": "create_request",
             "response": {
-                "identifier": str(self.identifier),
                 "endpoint": endpoint,
                 "kwargs": {**kwargs}
             }
