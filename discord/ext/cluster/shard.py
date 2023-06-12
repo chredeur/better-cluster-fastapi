@@ -6,11 +6,11 @@ import logging
 
 from websockets.client import connect
 from discord.ext.commands import Bot, Cog, AutoShardedBot
-from discord.ext.cluster.errors import NotConnected
-from discord.ext.cluster.objects import ClientPayload
+from .errors import NotConnected
+from .objects import ClientPayload
 from websockets.server import WebSocketServerProtocol
 from websockets.exceptions import InvalidHandshake, ConnectionClosed
-from typing import TYPE_CHECKING, Any, Tuple, Optional, Callable, TypeVar, Dict, Union, Type, List
+from typing import TYPE_CHECKING, Any, Tuple, Optional, Callable, TypeVar, Dict, Union, List
 
 if TYPE_CHECKING:
     from typing_extensions import ParamSpec, TypeAlias
@@ -31,7 +31,7 @@ class Shard:
     ----------
     bot: `discord.ext.commands.Bot`
         Your bot instance
-    shard_id: `str | int`
+    identifier: `str | int`
         This is how the bot will be identified in the cluster
     host: `str`
         The host of the cluster
@@ -45,7 +45,7 @@ class Shard:
 
     __slots__: Tuple[str] = (
         "bot", 
-        "shard_id", 
+        "identifier",
         "endpoints_list", 
         "host", 
         "port", 
@@ -61,14 +61,14 @@ class Shard:
     def __init__(
         self,
         bot: Union[Bot, AutoShardedBot],
-        shard_id: Union[str, int],
+        identifier: Union[str, int],
         endpoints_list: List[Tuple[str, RouteFunc]],
         host: str = "127.0.0.1",
         port: int = 20000,
         secret_key: str = None,
     ) -> None:
         self.bot = bot
-        self.shard_id = shard_id
+        self.identifier = identifier
         self.endpoints_list = endpoints_list
         self.host = host
         self.port = port
@@ -100,7 +100,7 @@ class Shard:
 
         endpoint: str = request.get("endpoint")
 
-        shard_id, func = self.endpoints[self.bot.user.id].get(endpoint)
+        identifier, func = self.endpoints[self.bot.user.id].get(endpoint)
         cls = self.__find_cls__(endpoint)
         
         arguments = (cls, ClientPayload(request))
@@ -152,7 +152,8 @@ class Shard:
                     self.base_url,
                     extra_headers={
                         "Secret-Key": str(self.secret_key),
-                        "Shard-ID": str(self.shard_id),
+                        "Bot-ID": str(self.bot.user.id),
+                        "Identifier": str(self.identifier)
                     }
                 )
             except (ConnectionRefusedError, InvalidHandshake):
@@ -164,8 +165,7 @@ class Shard:
                     json.dumps({
                         "endpoint_choosen": "initialize_shard",
                         "response": {
-                            "endpoints": [],
-                            "client_id": self.bot.user.id
+                            "endpoints": []
                         }
                     })
                 )
@@ -190,7 +190,8 @@ class Shard:
                 self.base_url,
                 extra_headers={
                     "Secret-Key": str(self.secret_key),
-                    "Shard-ID": str(self.shard_id),
+                    "Bot-ID": str(self.bot.user.id),
+                    "Identifier": str(self.identifier)
                 }
             )
         except (ConnectionRefusedError, InvalidHandshake):
@@ -201,13 +202,12 @@ class Shard:
                 del self.endpoints[self.bot.user.id]
             self.endpoints[self.bot.user.id] = {}
             for x in self.endpoints_list:
-                self.endpoints[self.bot.user.id][f"{x[0]}"] = (self.shard_id, x[1])
+                self.endpoints[self.bot.user.id][f"{x[0]}"] = (self.identifier, x[1])
             await self.websocket.send(
                 json.dumps({
                     "endpoint_choosen": "initialize_shard",
                     "response": {
-                        "endpoints": [x[0] for x in self.endpoints[self.bot.user.id].items()],
-                        "client_id": self.bot.user.id
+                        "endpoints": [x[0] for x in self.endpoints[self.bot.user.id].items()]
                     }
                 })
             )
@@ -234,7 +234,7 @@ class Shard:
             self.pending_closing = True
             await self.websocket.send(
                 json.dumps({
-                    "endpoint_choosen": "disconnect_shard"
+                    "endpoint_choosen": "disconnect_shard",
                 })
             )
             self.logger.info("Successfully disconnected to the cluster!")

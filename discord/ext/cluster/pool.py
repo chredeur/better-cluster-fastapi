@@ -3,19 +3,18 @@ from __future__ import annotations  # type: ignore
 import time
 import asyncio
 import logging
-import json
 
 from types import TracebackType
-from typing import Any, Dict, Optional, Type
+from typing import Any, Dict, Optional, Type, Union
 from aiohttp import ClientConnectorError, ClientConnectionError, ClientSession, WSCloseCode, WSMsgType, ClientWebSocketResponse
-from .errors import NotConnected
 
 
 class Session:
-    def __init__(self, url: str, shard_id: Union[str, int], secret_key: Optional[str] = None) -> None:
+    def __init__(self, url: str, bot_id: Union[str, int], identifier: Union[str, int], secret_key: Optional[str] = None) -> None:
         self.url = url
         self.secret_key = secret_key
-        self.shard_id = shard_id
+        self.bot_id = bot_id
+        self.identifier = identifier
 
         self.logger = logging.getLogger(__name__)
         self.session: Optional[ClientSession] = None
@@ -46,7 +45,7 @@ class Session:
                 headers={
                     "Endpoints": "create_request",
                     "Secret-Key": str(self.secret_key),
-                    "Shard-ID": str(self.shard_id),
+                    "Bot-ID": str(self.bot_id),
                 }
             )
         except (ClientConnectionError, ClientConnectorError):
@@ -98,6 +97,7 @@ class Session:
         payload = {
             "endpoint_choosen": "create_request",
             "response": {
+                "identifier": str(self.identifier),
                 "endpoint": endpoint,
                 "kwargs": {**kwargs}
             }

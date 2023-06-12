@@ -16,6 +16,7 @@ logging.getLogger("discord.gateway").disabled = True
 
 endpoints_list = []
 
+
 class MyBot(commands.Bot):
     def __init__(self) -> None:
         intents = discord.Intents.all()
@@ -25,7 +26,7 @@ class MyBot(commands.Bot):
             intents=intents
         )
 
-        self.shard = Shard(self, shard_id=1, endpoints_list=endpoints_list)
+        self.shard = Shard(self, identifier=1, endpoints_list=endpoints_list)
 
     async def setup_hook(self) -> None:
         await self.shard.connect()

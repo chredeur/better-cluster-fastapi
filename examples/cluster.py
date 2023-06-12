@@ -3,10 +3,9 @@ from __future__ import annotations
 import json
 import uvicorn
 import os
-import traceback
 
 from uuid import uuid4
-from typing import Callable, List, Dict, Any, Optional, Tuple, Union
+from typing import List, Dict, Any, Optional, Tuple, Union
 
 from fastapi import FastAPI, WebSocket, WebSocketDisconnect
 
@@ -17,68 +16,79 @@ secret_key = "my_secret_key"
 
 class ShardsManager:
     def __init__(self):
-        self.shards: Dict[str, Tuple[WebSocket, List, int]] = {}
+        self.shards: Dict[str, Dict[str, Tuple[WebSocket, List]]] = {}
         self.waiters: Dict[str, WebSocket] = {}
 
-    async def initialize_shard(self, websocket: WebSocket, data):
-        id = websocket.headers["Shard-ID"]
-        if self.shards.get(id):
-            await websocket.send_text(json.dumps({"message": f"Shard with ID {id!r} already exists!", "code": 500}, separators=(", ", ": ")))
+    async def initialize_shard(self, websocket: WebSocket, data: Dict):
+        bot_id = websocket.headers["Bot-Id"]
+        identifier = websocket.headers["Identifier"]
+        data_response = data.get('response')
+        if identifier in self.shards.get(bot_id):
+            await websocket.send_text(json.dumps({"message": f"Shard with ID {identifier!r} already exists!", "code": 500}, separators=(", ", ": ")))
             await websocket.close()
             return 500
+        if not os.path.isdir("db"):
+            os.mkdir(f'db')
+        if not data_response.get('endpoints'):
+            with open(f"db/{bot_id}/{identifier}.json", 'r') as f:
+                js = json.load(f)
+                f.close()
+            self.shards[bot_id] = {identifier: (websocket, js['endpoints'])}
         else:
-            if not os.path.isdir("db"):
-                os.mkdir(f'db')
-            if not data.get("response")['endpoints']:
-                with open(f"db/{id}.json", 'r') as f:
-                    js = json.load(f)
-                    f.close()
-                self.shards[id] = websocket, js['endpoints'], data.get("response")["client_id"]
-            else:
-                with open(f"db/{id}.json", "w+") as e:
-                    dict_finaly = {"endpoints": data.get("response")['endpoints']}
-                    json.dump(dict_finaly, e, sort_keys=True, indent=4)
-                    e.close()
-                self.shards[id] = websocket, data.get("response")['endpoints'], data.get("response")["client_id"]
-            await websocket.send_text(json.dumps({"message": "Successfuly connected to the cluster!", "code": 200}, separators=(", ", ": ")))
-            return 200
+            with open(f"db/{bot_id}/{identifier}.json", "w+") as e:
+                dict_finaly = {"endpoints": data_response.get('endpoints')}
+                json.dump(dict_finaly, e, sort_keys=True, indent=4)
+                e.close()
+            self.shards[bot_id] = self.shards[bot_id] = {identifier: (websocket, data_response['endpoints'])}
+        await websocket.send_text(json.dumps({"message": "Successfuly connected to the cluster!", "code": 200}, separators=(", ", ": ")))
+        return 200
 
-    async def disconnect_shard(self, websocket: WebSocket):
-        id = websocket.headers["Shard-ID"]
-        if (shard := self.shards.get(id)):
+    async def disconnect_shard(self, websocket: WebSocket, data: Dict):
+        bot_id = websocket.headers["Bot-ID"]
+        identifier = websocket.headers["Identifier"]
+        if bot_id in self.shards and identifier in self.shards[bot_id]:
+            shard = self.shards[bot_id].get(identifier)
             if websocket == shard[0]:
                 try:
-                    os.remove(f"db/{id}.json")
+                    os.remove(f"db/{bot_id}/{identifier}.json")
                 except:
                     pass
                 await shard[0].close()
-                del self.shards[id]
+                del self.shards[bot_id][identifier]
                 return 200
             else:
                 await websocket.close()
                 return 500
-        else:
-            await websocket.close()
-            return 500
+        await websocket.close()
+        return 500
 
     async def disconnect(self, websocket: WebSocket):
-        id = websocket.headers["Shard-ID"]
-        if (shard := self.shards.get(id)):
+        bot_id = websocket.headers["Bot-ID"]
+        identifier = websocket.headers["Identifier"]
+        if bot_id in self.shards and identifier in self.shards[bot_id]:
+            shard = self.shards[bot_id].get(identifier)
             if websocket == shard[0]:
-                del self.shards[id]
+                del self.shards[bot_id]
 
     async def return_response(self, websocket: WebSocket, data: Dict):
         await self.waiters[data.get("uuid")].send_text(json.dumps(data.get("response"), separators=(", ", ": ")))
         del self.waiters[data.get("uuid")]
 
     async def create_request(self, websocket: WebSocket, data: Dict):
-        if not (id := websocket.headers["Shard-ID"]):
+        if not (identifier := websocket.headers["Identifier"]):
             await websocket.send_text(json.dumps({"message": "Missing shard ID!", "code": 500}, separators=(", ", ": ")))
             await websocket.close()
             return 500
-
-        if not (shard := self.shards.get(id)):
-            await websocket.send_text(json.dumps({"message": f"Shard with ID {id!r} doesn't exists!", "code": 404}, separators=(", ", ": ")))
+        if not (bot_id := websocket.headers["Bot-ID"]):
+            await websocket.send_text(json.dumps({"message": "Missing bot ID!", "code": 500}, separators=(", ", ": ")))
+            await websocket.close()
+            return 500
+        if bot_id not in self.shards:
+            await websocket.send_text(json.dumps({"message": f"Bot with ID {bot_id!r} doesn't exists!", "code": 404}, separators=(", ", ": ")))
+            await websocket.close()
+            return 404
+        if not (shard := self.shards.get(bot_id)[identifier]):
+            await websocket.send_text(json.dumps({"message": f"Shard with ID {identifier!r} doesn't exists!", "code": 404}, separators=(", ", ": ")))
             await websocket.close()
             return 404
 
@@ -111,10 +121,12 @@ async def websocket_request_manager(websocket: WebSocket):
     if not is_secure(str(websocket.headers['Secret-Key'])):
         await websocket.send_text(json.dumps({"message": "Invalid secret key!", "code": 403}, separators=(", ", ": ")))
         return await websocket.close()
-    if not websocket.headers["Shard-ID"]:
-        await websocket.send_text(json.dumps({"message": "Missing shard ID!", "code": 500}, separators=(", ", ": ")))
+    if not websocket.headers["Bot-ID"]:
+        await websocket.send_text(json.dumps({"message": "Missing bot ID!", "code": 500}, separators=(", ", ": ")))
         return await websocket.close()
-
+    if not websocket.headers["Identifier"]:
+        await websocket.send_text(json.dumps({"message": "Missing Identifier!", "code": 500}, separators=(", ", ": ")))
+        return await websocket.close()
     try:
         while True:
             data = await websocket.receive_json()
@@ -125,7 +137,7 @@ async def websocket_request_manager(websocket: WebSocket):
                         break
                 else:
                     if data.get("endpoint_choosen") == "disconnect_shard":
-                        await shards_manager.disconnect_shard(websocket=websocket)
+                        await shards_manager.disconnect_shard(websocket=websocket, data=data)
                         break
                     else:
                         await shards_manager.return_response(websocket=websocket, data=data)
@@ -146,4 +158,4 @@ async def websocket_request_manager(websocket: WebSocket):
 
 
 if __name__ == "__main__":
-    uvicorn.run(f"{__name__}:app", host="0.0.0.0", port=9999, reload=False, workers=1)
+    uvicorn.run(f"{__name__}:app", host="0.0.0.0", port=9999, reload=False)

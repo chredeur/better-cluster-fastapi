@@ -1,13 +1,9 @@
 from __future__ import annotations
 
-import asyncio
 import logging
-import time
 
 from .pool import Session
-from types import TracebackType
-from typing import Any, Dict, Optional, Type,  Union
-from aiohttp import ClientConnectorError, ClientConnectionError, ClientSession, WSCloseCode,WSMsgType
+from typing import Any, Dict, Optional,  Union
 
 
 class Client:
@@ -47,16 +43,16 @@ class Client:
     def url(self) -> str:
         return f"ws://{self.host}:{self.standard_port}"
 
-    async def is_alive(self, shard_id: Union[str, int]) -> bool:
+    async def is_alive(self, bot_id: Union[str, int], identifier: Union[str, int]) -> bool:
         """|coro|
 
         Performs a test to the connetion state
         
         """
-        async with Session(self.url, shard_id, self.secret_key) as session:
+        async with Session(self.url, bot_id, identifier, self.secret_key) as session:
             return await session.is_alive()
 
-    async def request(self, endpoint: str, shard_id: Union[str, int], **kwargs: Any) -> Optional[Dict]:
+    async def request(self, bot_id: Union[str, int], identifier: Union[str, int], endpoint: str, **kwargs: Any) -> Optional[Dict]:
         """|coro|
         
         Make a request to the server process.
@@ -67,5 +63,5 @@ class Client:
         **kwargs: `Any`
             The data for the endpoint
         """
-        async with Session(self.url, shard_id, self.secret_key) as session:
+        async with Session(self.url, bot_id, identifier, self.secret_key) as session:
             return await session.request(endpoint, **kwargs)
