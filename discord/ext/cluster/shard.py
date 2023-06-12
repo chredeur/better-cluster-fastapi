@@ -222,7 +222,6 @@ class Shard:
                     asyncio.create_task(self.wait_bot_is_ready())
             else:
                 return self.logger.critical(message['message'])
-            del self.endpoints_list
 
     async def disconnect(self) -> None:
         """|coro|
