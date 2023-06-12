@@ -109,7 +109,7 @@ class ShardsManager:
             return 404
         else:
             ID = str(uuid4())
-            await shard[0].send_text(json.dumps({"endpoint": endpoint, "data": kwargs, "uuid": ID}, separators=(", ", ": ")))
+            await shard[0].send_text(json.dumps({"endpoint": endpoint, "data": kwargs, "uuid": ID, "identifier": identifier}, separators=(", ", ": ")))
             self.waiters[ID] = websocket
             return 200
 

@@ -56,7 +56,7 @@ class Shard:
         "pending_closing",
     )
 
-    endpoints: Dict[int, Dict[str, Tuple[Union[int, str], RouteFunc]]] = {}
+    endpoints: Dict[str, Dict[str, Dict[str, Tuple[Union[int, str], RouteFunc]]]] = {}
 
     def __init__(
         self,
@@ -99,8 +99,9 @@ class Shard:
         self.logger.debug(f"Received request: {request!r}")
 
         endpoint: str = request.get("endpoint")
+        identifier: str = request.get("identifier")
 
-        identifier, func = self.endpoints[self.bot.user.id].get(endpoint)
+        identifier, func = self.endpoints[str(self.bot.user.id)][identifier].get(endpoint)
         cls = self.__find_cls__(endpoint)
         
         arguments = (cls, ClientPayload(request))
@@ -198,16 +199,16 @@ class Shard:
             return self.logger.critical("Failed to connect to the cluster!")
         else:
             self.pending_closing = False
-            if self.bot.user.id in self.endpoints:
-                del self.endpoints[self.bot.user.id]
-            self.endpoints[self.bot.user.id] = {}
+            if str(self.bot.user.id) not in self.endpoints:
+                self.endpoints[str(self.bot.user.id)] = {}
+            self.endpoints[str(self.bot.user.id)][str(self.identifier)] = {}
             for x in self.endpoints_list:
-                self.endpoints[self.bot.user.id][f"{x[0]}"] = (self.identifier, x[1])
+                self.endpoints[str(self.bot.user.id)][str(self.identifier)][f"{x[0]}"] = (self.identifier, x[1])
             await self.websocket.send(
                 json.dumps({
                     "endpoint_choosen": "initialize_shard",
                     "response": {
-                        "endpoints": [x[0] for x in self.endpoints[self.bot.user.id].items()]
+                        "endpoints": [x[0] for x in self.endpoints[str(self.bot.user.id)][str(self.identifier)].items()]
                     }
                 })
             )
