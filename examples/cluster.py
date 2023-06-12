@@ -20,7 +20,7 @@ class ShardsManager:
         self.waiters: Dict[str, WebSocket] = {}
 
     async def initialize_shard(self, websocket: WebSocket, data: Dict):
-        bot_id = websocket.headers["Bot-Id"]
+        bot_id = websocket.headers["Bot-ID"]
         identifier = websocket.headers["Identifier"]
         data_response = data.get('response')
         if identifier in self.shards.get(bot_id):
