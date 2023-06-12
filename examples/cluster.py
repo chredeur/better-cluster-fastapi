@@ -20,8 +20,8 @@ class ShardsManager:
         self.waiters: Dict[str, WebSocket] = {}
 
     async def initialize_shard(self, websocket: WebSocket, data: Dict):
-        bot_id = websocket.headers["Bot-ID"]
-        identifier = websocket.headers["Identifier"]
+        bot_id = websocket.headers["bot-id"]
+        identifier = websocket.headers["identifier"]
         data_response = data.get('response')
         if identifier in self.shards.get(bot_id):
             await websocket.send_text(json.dumps({"message": f"Shard with ID {identifier!r} already exists!", "code": 500}, separators=(", ", ": ")))
@@ -44,8 +44,8 @@ class ShardsManager:
         return 200
 
     async def disconnect_shard(self, websocket: WebSocket, data: Dict):
-        bot_id = websocket.headers["Bot-ID"]
-        identifier = websocket.headers["Identifier"]
+        bot_id = websocket.headers["bot-id"]
+        identifier = websocket.headers["identifier"]
         if bot_id in self.shards and identifier in self.shards[bot_id]:
             shard = self.shards[bot_id].get(identifier)
             if websocket == shard[0]:
@@ -63,8 +63,8 @@ class ShardsManager:
         return 500
 
     async def disconnect(self, websocket: WebSocket):
-        bot_id = websocket.headers["Bot-ID"]
-        identifier = websocket.headers["Identifier"]
+        bot_id = websocket.headers["bot-id"]
+        identifier = websocket.headers["identifier"]
         if bot_id in self.shards and identifier in self.shards[bot_id]:
             shard = self.shards[bot_id].get(identifier)
             if websocket == shard[0]:
@@ -75,11 +75,11 @@ class ShardsManager:
         del self.waiters[data.get("uuid")]
 
     async def create_request(self, websocket: WebSocket, data: Dict):
-        if not (identifier := websocket.headers["Identifier"]):
+        if not (identifier := websocket.headers["identifier"]):
             await websocket.send_text(json.dumps({"message": "Missing shard ID!", "code": 500}, separators=(", ", ": ")))
             await websocket.close()
             return 500
-        if not (bot_id := websocket.headers["Bot-ID"]):
+        if not (bot_id := websocket.headers["bot-id"]):
             await websocket.send_text(json.dumps({"message": "Missing bot ID!", "code": 500}, separators=(", ", ": ")))
             await websocket.close()
             return 500
@@ -118,14 +118,14 @@ def is_secure(headers_secret_key: Union[str, int]) -> bool:
 @app.websocket("/")
 async def websocket_request_manager(websocket: WebSocket):
     await websocket.accept()
-    if not is_secure(str(websocket.headers['Secret-Key'])):
+    if not is_secure(str(websocket.headers['secret-key'])):
         await websocket.send_text(json.dumps({"message": "Invalid secret key!", "code": 403}, separators=(", ", ": ")))
         return await websocket.close()
-    if not websocket.headers["Bot-ID"]:
+    if not websocket.headers["bot-id"]:
         await websocket.send_text(json.dumps({"message": "Missing bot ID!", "code": 500}, separators=(", ", ": ")))
         return await websocket.close()
-    if not websocket.headers["Identifier"]:
-        await websocket.send_text(json.dumps({"message": "Missing Identifier!", "code": 500}, separators=(", ", ": ")))
+    if not websocket.headers["identifier"]:
+        await websocket.send_text(json.dumps({"message": "Missing identifier!", "code": 500}, separators=(", ", ": ")))
         return await websocket.close()
     try:
         while True:
