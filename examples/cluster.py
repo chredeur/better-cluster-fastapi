@@ -87,10 +87,12 @@ class ShardsManager:
             await websocket.send_text(json.dumps({"message": f"Bot with ID {bot_id!r} doesn't exists!", "code": 404}, separators=(", ", ": ")))
             await websocket.close()
             return 404
-        if identifier in self.shards.get(bot_id) and not (shard := self.shards.get(bot_id)[identifier]):
+        if identifier not in self.shards.get(bot_id):
             await websocket.send_text(json.dumps({"message": f"Shard with ID {identifier!r} doesn't exists!", "code": 404}, separators=(", ", ": ")))
             await websocket.close()
             return 404
+
+        shard = self.shards.get(bot_id)[identifier]
 
         endpoint: Optional[str] = data["endpoint"]
         kwargs: Dict[str, Any] = data["kwargs"]
