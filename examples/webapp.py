@@ -1,5 +1,5 @@
 from quart import Quart
-from discord.ext.client import Client
+from discord.ext.cluster import Client
 
 app = Quart(__name__)
 ipc = Client(host="127.0.0.1", secret_key="secret", standard_port=1025)
