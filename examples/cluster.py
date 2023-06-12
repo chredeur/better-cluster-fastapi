@@ -149,7 +149,7 @@ class ShardsManager:
             async def shard_task(identifier):
                 try:
                     ID = str(uuid4())
-                    await self.shards[bot_id][identifier][0].send_text(json.dumps({"endpoint": endpoint, "identifier": int(identifier), "data": kwargs, "uuid": ID}, separators=(", ", ": ")))
+                    await self.shards[bot_id][identifier][0].send_text(json.dumps({"endpoint": endpoint, "identifier": str(identifier), "data": kwargs, "uuid": ID}, separators=(", ", ": ")))
                     self.waiters_all_shards[ID] = {'id': ID_request, 'wait_finish': wait_finish}
                 except:
                     if wait_finish:
