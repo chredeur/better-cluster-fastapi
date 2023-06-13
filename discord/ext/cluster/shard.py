@@ -126,7 +126,7 @@ class Shard:
         if not response.get("code"):
             response["code"] = 200
 
-        response_finaly = {'endpoint_choosen': "return_response", "uuid": request.get("uuid"), 'response': response}
+        response_finaly = {'endpoint_choosen': "return_response", "identifier": str(identifier), "uuid": request.get("uuid"), 'response': response}
 
         await self.websocket.send(json.dumps(response_finaly, separators=(", ", ": ")))
         self.logger.debug(f"Sending response: {response!r}")
