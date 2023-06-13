@@ -125,7 +125,7 @@ class ShardsManager:
             return 200
 
     async def create_request_all_shard(self, websocket: WebSocket, data: Dict):
-        if not (bot_id := websocket.headers["Bot-ID"]):
+        if not (bot_id := str(websocket.headers["Bot-ID"])):
             await websocket.send_text(json.dumps({"message": "Missing bot ID!", "code": 500}, separators=(", ", ": ")))
             await websocket.close()
             return 500
@@ -146,14 +146,14 @@ class ShardsManager:
 
         self.cache_shard_request_custom[ID_request] = {}
         for identifier in self.shards[bot_id]:
-            async def shard_task(identifier):
+            async def shard_task(id):
                 try:
                     ID = str(uuid4())
-                    await self.shards[bot_id][identifier][0].send_text(json.dumps({"endpoint": endpoint, "identifier": str(identifier), "data": kwargs, "uuid": ID}, separators=(", ", ": ")))
+                    await self.shards[bot_id][id][0].send_text(json.dumps({"endpoint": endpoint, "identifier": str(id), "data": kwargs, "uuid": ID}, separators=(", ", ": ")))
                     self.waiters_all_shards[ID] = {'id': ID_request, 'wait_finish': wait_finish}
                 except:
                     if wait_finish:
-                        self.cache_shard_request_custom[ID_request][identifier] = {}
+                        self.cache_shard_request_custom[ID_request][id] = {}
             asyncio.create_task(shard_task(identifier))
         if wait_finish:
             while True:
