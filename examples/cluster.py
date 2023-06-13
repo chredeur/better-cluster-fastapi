@@ -72,12 +72,14 @@ class ShardsManager:
         return 500
 
     async def disconnect(self, websocket: WebSocket):
-        bot_id = websocket.headers["Bot-ID"]
-        identifier = websocket.headers["Identifier"]
+        bot_id = str(websocket.headers["Bot-ID"])
+        identifier = str(websocket.headers["Identifier"])
         if bot_id in self.shards and identifier in self.shards[bot_id]:
             shard = self.shards[bot_id].get(identifier)
             if websocket == shard[0]:
-                del self.shards[bot_id]
+                del self.shards[bot_id][identifier]
+                if not self.shards[bot_id]:
+                    del self.shards[bot_id]
 
     async def return_response(self, websocket: WebSocket, data: Dict):
         if data.get("uuid") in self.waiters_all_shards:
