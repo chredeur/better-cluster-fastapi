@@ -101,7 +101,7 @@ class Shard:
         endpoint: str = request.get("endpoint")
         identifier: str = request.get("identifier")
 
-        identifier, func = self.endpoints[str(self.bot.user.id)][identifier].get(endpoint)
+        identifier, func = self.endpoints[str(self.bot.user.id)][str(identifier)].get(endpoint)
         cls = self.__find_cls__(endpoint)
         
         arguments = (cls, ClientPayload(request))
@@ -203,7 +203,7 @@ class Shard:
                 self.endpoints[str(self.bot.user.id)] = {}
             self.endpoints[str(self.bot.user.id)][str(self.identifier)] = {}
             for x in self.endpoints_list:
-                self.endpoints[str(self.bot.user.id)][str(self.identifier)][f"{x[0]}"] = (self.identifier, x[1])
+                self.endpoints[str(self.bot.user.id)][str(self.identifier)][f"{x[0]}"] = (str(self.identifier), x[1])
             await self.websocket.send(
                 json.dumps({
                     "endpoint_choosen": "initialize_shard",
